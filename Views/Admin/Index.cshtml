@@ -1,0 +1,22 @@
+@model IEnumerable<HopMop.Models.PhotoPair>
+@{
+    ViewBag.Title = "Admin Dashboard";
+}
+<h1>Административен панел</h1>
+<p><a class="btn" href="/Admin/Upload">Качване на нова двойка снимки</a></p>
+<table class="admin-table">
+    <thead><tr><th>Заглавие</th><th>Качено</th><th>Действия</th></tr></thead>
+    <tbody>
+    @foreach(var p in Model) {
+        <tr>
+            <td>@p.Title</td>
+            <td>@p.CreatedAt.ToLocalTime()</td>
+            <td>
+                <form method="post" asp-action="Delete" asp-route-id="@p.Id" onsubmit="return confirm('Изтриване?');">
+                    <button class="btn danger" type="submit">Изтрий</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

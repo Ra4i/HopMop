@@ -1,0 +1,36 @@
+:root{
+  --clean-blue:#0b66ff;
+  --gold:#d4af37;
+  --white:#ffffff;
+  --muted:#65748b;
+}
+*{box-sizing:border-box}
+body{font-family:Inter,Segoe UI,Roboto,Arial;background:#fff;color:#111;margin:0}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.site-header{background:linear-gradient(90deg,var(--clean-blue),#0b5be6);color:#fff;padding:12px 0}
+.nav-row{display:flex;align-items:center;gap:16px}
+.brand{font-weight:700;color:#fff;text-decoration:none}
+.brand .bg{font-weight:400;font-size:0.9rem;display:block}
+.main-nav{margin-left:20px}
+.main-nav a{color:#fff;margin:0 8px;text-decoration:none}
+.header-cta{margin-left:auto;display:flex;gap:8px}
+.header-cta a{background:rgba(255,255,255,0.12);color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none}
+.hero{padding:48px 0;background:linear-gradient(180deg,#f7fbff, #fff)}
+.hero h1{color:var(--clean-blue);margin:0 0 12px}
+.btn{display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none}
+.btn.primary{background:var(--clean-blue);color:#fff}
+.btn.outline{background:transparent;border:2px solid var(--clean-blue);color:var(--clean-blue)}
+.features .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #eee;padding:12px;border-radius:10px}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.ba-slider{position:relative;overflow:hidden;border-radius:8px}
+.ba-slider img{width:100%;height:auto;display:block}
+.ba-slider .after{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;clip-path: inset(0 0 0 50%)}
+.ba-slider .slider-handle{position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--gold)}
+.site-footer{padding:18px 0;background:#f3f6fb;color:var(--muted)}
+.sticky-actions{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px}
+.sticky-phone,.sticky-viber{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--clean-blue);color:#fff;text-decoration:none;font-size:22px}
+.admin-table{width:100%;border-collapse:collapse}
+.admin-table th,.admin-table td{border:1px solid #e7eefc;padding:8px}
+.notice.success{background:#e6ffed;padding:8px;border-left:4px solid #19a24a}
+@media(max-width:768px){.main-nav{display:none}.header-cta{display:flex}}

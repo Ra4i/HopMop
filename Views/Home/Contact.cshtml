@@ -1,0 +1,20 @@
+@{
+    ViewBag.Title = "Контакти - HopMop";
+}
+<h1>Свържете се с нас</h1>
+@if (TempData["Success"] != null) {
+    <div class="notice success">@TempData["Success"]</div>
+}
+<form method="post" asp-action="ContactSubmit">
+    <label>Име<input name="Name" required /></label>
+    <label>Email<input type="email" name="Email" required /></label>
+    <label>Телефон<input name="Phone" /></label>
+    <label>Съобщение<textarea name="Message" required></textarea></label>
+    <button class="btn primary" type="submit">Изпрати</button>
+</form>
+
+<div class="contact-info">
+    <h3>Бързи действия</h3>
+    <p>Телефон: <a href="tel:+359888000000">+359 88 800 0000</a></p>
+    <p>Viber: <a href="viber://chat?number=%2B359888000000">Отвори в Viber</a></p>
+</div>

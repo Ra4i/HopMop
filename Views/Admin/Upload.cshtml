@@ -1,0 +1,12 @@
+@{
+    ViewBag.Title = "Upload Pair";
+}
+<h1>Качи двойка снимки (Преди/След)</h1>
+<form method="post" enctype="multipart/form-data">
+    <label>Заглавие<input name="title" required /></label>
+    <label>Описание<textarea name="description"></textarea></label>
+    <label>Преди (изображение)<input type="file" name="beforeImage" accept="image/*" required /></label>
+    <label>След (изображение)<input type="file" name="afterImage" accept="image/*" required /></label>
+    <button class="btn primary" type="submit">Качи</button>
+</form>
+<p><a href="/Admin">Назад към панела</a></p>

@@ -1,0 +1,79 @@
+# .gitignore for HopMop (ASP.NET Core / Visual Studio)
+# Keep local secrets, build outputs and editor files out of git
+
+# Build artifacts
+bin/
+obj/
+out/
+
+# Publish output
+publish/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.iml
+
+# ReSharper
+_ReSharper*/
+*ReSharper*/
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Node
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Database files (SQLite)
+*.db
+*.db-journal
+*.sqlite
+hopmop.db
+
+# Environment files and local overrides
+.env
+.env.*
+.env.local
+.env.development.local
+.env.production.local
+
+# ASP.NET Core user secrets file
+secrets.json
+
+# appsettings local/dev files
+appsettings.Development.json
+appsettings.Local.json
+
+# Certificates and keys
+*.pfx
+*.key
+
+# Ignore publishing and temporary files
+*.publishsettings
+*.wapproj
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Ignore temporary files created by editors
+*~
+*.swp
+

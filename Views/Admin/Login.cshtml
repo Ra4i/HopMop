@@ -1,0 +1,12 @@
+@{
+    ViewBag.Title = "Admin Login";
+}
+<h1>Вход за администратор</h1>
+<form method="post" asp-controller="Account" asp-action="Login">
+    <label>Email<input name="email" type="email" required /></label>
+    <label>Парола<input name="password" type="password" required /></label>
+    <button class="btn primary" type="submit">Вход</button>
+</form>
+@if (!ViewData.ModelState.IsValid) {
+    <div class="notice error">Грешка в данните</div>
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>@ViewBag.Title ?? "HopMop Ltd."</title>
+    <meta name="description" content="Почистване София - HopMop ЕООД. Професионална почистваща фирма за домове и бизнес." />
+    <meta property="og:title" content="HopMop Ltd. - Чистота, на която можеш да разчиташ!" />
+    <meta property="og:description" content="Почистване София, основно почистване, почистване след ремонт. HopMop ЕООД" />
+    <link rel="stylesheet" href="/css/site.css" />
+    <script src="/js/site.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container nav-row">
+            <a class="brand" href="/">HopMop Ltd. <span class="bg">ХопМоп ЕООД</span></a>
+            <nav class="main-nav">
+                <a href="/">Начало</a>
+                <a href="/Home/About">За нас</a>
+                <a href="/Home/Services">Услуги</a>
+                <a href="/Home/Prices">Цени</a>
+                <a href="/Home/Gallery">Преди / След</a>
+                <a href="/Home/Contact">Контакти</a>
+            </nav>
+            <div class="header-cta">
+                <a class="phone" href="tel:+359888000000">+359 88 800 0000</a>
+                <a class="viber" href="viber://chat?number=%2B359888000000">Viber</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>© @DateTime.Now.Year HopMop Ltd. — Чистота, на която можеш да разчиташ! | София и регион</p>
+        </div>
+    </footer>
+
+    <!-- Sticky action buttons -->
+    <div class="sticky-actions">
+        <a class="sticky-phone" href="tel:+359888000000" aria-label="Call">📞</a>
+        <a class="sticky-viber" href="viber://chat?number=%2B359888000000" aria-label="Viber">💬</a>
+    </div>
+</body>
+</html>
