@@ -49,6 +49,7 @@ hopmop.db
 # Environment files and local overrides
 .env
 .env.*
+!.env.example
 .env.local
 .env.development.local
 .env.production.local

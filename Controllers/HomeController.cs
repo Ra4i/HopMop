@@ -62,14 +62,22 @@ namespace HopMop.Controllers
             {
                 var smtp = _cfg.GetSection("Smtp");
                 var host = smtp["Host"];
-                if (!string.IsNullOrEmpty(host))
+                var from = smtp["From"];
+                var to = _cfg["Admin:DefaultEmail"];
+                if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(from) && !string.IsNullOrEmpty(to))
                 {
-                    using var client = new SmtpClient(host, int.Parse(smtp["Port"] ?? "25"))
+                    var port = 25;
+                    if (!int.TryParse(smtp["Port"], out port))
+                    {
+                        port = 25;
+                    }
+
+                    using var client = new SmtpClient(host, port)
                     {
                         EnableSsl = true,
-                        Credentials = new System.Net.NetworkCredential(smtp["Username"], smtp["Password"]) 
+                        Credentials = new System.Net.NetworkCredential(smtp["Username"], smtp["Password"])
                     };
-                    var msg = new MailMessage(smtp["From"], _cfg["Admin:DefaultEmail"])
+                    var msg = new MailMessage(from, to)
                     {
                         Subject = "New inquiry from website",
                         Body = $"Name: {model.Name}\nEmail: {model.Email}\nPhone: {model.Phone}\nMessage:\n{model.Message}"
