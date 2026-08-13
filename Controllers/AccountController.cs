@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HopMop.Data;
 using HopMop.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -8,12 +9,13 @@ using Microsoft.AspNetCore.Identity;
 
 namespace HopMop.Controllers
 {
+    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly AppDbContext _db;
-        private readonly IPasswordHasher<AdminUser> _hasher;
+        private readonly IPasswordHasher<User> _hasher;
 
-        public AccountController(AppDbContext db, IPasswordHasher<AdminUser> hasher)
+        public AccountController(AppDbContext db, IPasswordHasher<User> hasher)
         {
             _db = db;
             _hasher = hasher;
@@ -21,6 +23,13 @@ namespace HopMop.Controllers
 
         [HttpGet]
         public IActionResult Login() => View("~/Views/Admin/Login.cshtml");
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            Response.StatusCode = StatusCodes.Status403Forbidden;
+            return View("~/Views/Admin/AccessDenied.cshtml");
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -32,7 +41,7 @@ namespace HopMop.Controllers
                 return View("~/Views/Admin/Login.cshtml");
             }
 
-            var user = _db.AdminUsers.FirstOrDefault(u => u.Email == email);
+            var user = _db.Users.FirstOrDefault(u => u.Email == email);
             if (user == null)
             {
                 ModelState.AddModelError("", "Невалиден email или парола.");
@@ -46,7 +55,7 @@ namespace HopMop.Controllers
                 return View("~/Views/Admin/Login.cshtml");
             }
 
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email), new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()) };
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email), new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), new Claim("IsAdmin", user.IsAdmin.ToString()) };
             var id = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
             return RedirectToAction("Index", "Admin");

@@ -3,8 +3,15 @@
     ViewBag.Title = "Галерия - ПРЕДИ / СЛЕД";
 }
 <h1>Преди / След</h1>
+<p class="lede">Плъзнете плъзгача върху всяка снимка, за да видите разликата преди и след почистването.</p>
 @if (!Model.Any()) {
-    <p>Няма качени снимки още. Администраторът може да качи снимки от панела.</p>
+    <section class="panel">
+        <div class="panel-head">
+            <span class="panel-icon" aria-hidden="true">📷</span>
+            <h2>Още няма снимки</h2>
+        </div>
+        <p>Скоро тук ще публикуваме резултати от нашата работа.</p>
+    </section>
 } else {
     <div class="gallery-grid">
         @foreach(var item in Model) {
@@ -12,8 +19,8 @@
                 <h3>@item.Title</h3>
                 <p>@item.Description</p>
                 <div class="ba-slider" data-before="@item.BeforeImagePath" data-after="@item.AfterImagePath">
-                    <img class="before" src="@item.BeforeImagePath" alt="Before - @item.Title" />
-                    <img class="after" src="@item.AfterImagePath" alt="After - @item.Title" />
+                    <img class="before" src="@item.BeforeImagePath" alt="Before - @item.Title" draggable="false" />
+                    <img class="after" src="@item.AfterImagePath" alt="After - @item.Title" draggable="false" />
                     <div class="slider-handle"></div>
                 </div>
             </div>

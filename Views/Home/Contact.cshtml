@@ -2,19 +2,50 @@
     ViewBag.Title = "Контакти - HopMop";
 }
 <h1>Свържете се с нас</h1>
+<p class="lede">Опишете накратко от какво имате нужда и ще се свържем с вас с оферта.</p>
+
 @if (TempData["Success"] != null) {
     <div class="notice success">@TempData["Success"]</div>
 }
-<form method="post" asp-action="ContactSubmit">
-    <label>Име<input name="Name" required /></label>
-    <label>Email<input type="email" name="Email" required /></label>
-    <label>Телефон<input name="Phone" /></label>
-    <label>Съобщение<textarea name="Message" required></textarea></label>
-    <button class="btn primary" type="submit">Изпрати</button>
-</form>
 
-<div class="contact-info">
-    <h3>Бързи действия</h3>
-    <p>Телефон: <a href="tel:+359888000000">+359 88 800 0000</a></p>
-    <p>Viber: <a href="viber://chat?number=%2B359888000000">Отвори в Viber</a></p>
+<div class="field-row contact-row">
+
+    <section class="panel">
+        <div class="panel-head">
+            <span class="panel-icon" aria-hidden="true">✉️</span>
+            <h2>Изпратете запитване</h2>
+        </div>
+        <form method="post" asp-action="ContactSubmit">
+            <label class="field">
+                <span class="field-label">Име</span>
+                <input name="Name" required placeholder="Например: Мария Иванова" />
+            </label>
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input type="email" name="Email" required placeholder="name@example.com" />
+                <small class="hint">На този адрес ще получите отговор.</small>
+            </label>
+            <label class="field">
+                <span class="field-label">Телефон <em class="optional">(може да пропуснете)</em></span>
+                <input name="Phone" placeholder="+359 88 800 0000" />
+            </label>
+            <label class="field">
+                <span class="field-label">Съобщение</span>
+                <textarea name="Message" rows="4" required placeholder="Например: Търся основно почистване на двустаен апартамент в Люлин."></textarea>
+                <small class="hint">Опишете площта и услугата, за да ви дадем точна цена.</small>
+            </label>
+            <button class="btn primary" type="submit">Изпрати запитването</button>
+        </form>
+    </section>
+
+    <section class="panel contact-info">
+        <div class="panel-head">
+            <span class="panel-icon" aria-hidden="true">⚡</span>
+            <h2>Бързи действия</h2>
+        </div>
+        <p>Ако предпочитате, свържете се директно — отговаряме и по телефон, и по Viber.</p>
+        <p>Телефон: <a href="tel:+359888000000">+359 88 800 0000</a></p>
+        <p>Viber: <a href="viber://chat?number=%2B359888000000">Отвори в Viber</a></p>
+    </section>
+
 </div>

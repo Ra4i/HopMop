@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using HopMop.Data;
 using HopMop.Models;
 
@@ -37,10 +40,51 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options => {
         options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(1);
+        options.SlidingExpiration = true;
+
+        // A cookie alone is not proof of access: re-check the account on every
+        // request. Without this, a cookie keeps working after its user is
+        // deleted (or the DB is dropped), and a demoted admin keeps admin
+        // rights until the cookie expires.
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async ctx =>
+            {
+                var db = ctx.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+
+                User? user = null;
+                if (int.TryParse(ctx.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                {
+                    user = await db.Users.FindAsync(userId);
+                }
+
+                var isAdminClaim = ctx.Principal?.FindFirstValue("IsAdmin");
+                if (user is null || !string.Equals(user.IsAdmin.ToString(), isAdminClaim, StringComparison.Ordinal))
+                {
+                    ctx.RejectPrincipal();
+                    await ctx.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                }
+            }
+        };
     });
 
-builder.Services.AddSingleton<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(ctx =>
+            ctx.User.HasClaim(c => c.Type == "IsAdmin" && c.Value == "True")));
+
+    // Deny by default: any endpoint that does not opt out with [AllowAnonymous]
+    // requires a logged-in user, so a new controller cannot be left unprotected
+    // by forgetting [Authorize].
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var app = builder.Build();
 
@@ -53,14 +97,14 @@ using (var scope = app.Services.CreateScope())
     // Seed default admin only if credentials are explicitly provided.
     var defaultEmail = builder.Configuration["Admin:DefaultEmail"];
     var defaultPassword = builder.Configuration["Admin:DefaultPassword"];
-    if (!db.AdminUsers.Any() && !string.IsNullOrWhiteSpace(defaultEmail) && !string.IsNullOrWhiteSpace(defaultPassword))
+    if (!db.Users.Any() && !string.IsNullOrWhiteSpace(defaultEmail) && !string.IsNullOrWhiteSpace(defaultPassword))
     {
-        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AdminUser>>();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
 
-        var admin = new AdminUser { Email = defaultEmail };
+        var admin = new User { Email = defaultEmail, IsAdmin = true };
         admin.PasswordHash = hasher.HashPassword(admin, defaultPassword);
 
-        db.AdminUsers.Add(admin);
+        db.Users.Add(admin);
         db.SaveChanges();
 
         System.Diagnostics.Debug.WriteLine($"Admin user created: {defaultEmail}");

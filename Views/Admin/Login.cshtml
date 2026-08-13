@@ -2,11 +2,36 @@
     ViewBag.Title = "Admin Login";
 }
 <h1>Вход за администратор</h1>
-<form method="post" asp-controller="Account" asp-action="Login">
-    <label>Email<input name="email" type="email" required /></label>
-    <label>Парола<input name="password" type="password" required /></label>
-    <button class="btn primary" type="submit">Вход</button>
-</form>
+<p class="lede">Въведете вашия email и парола, за да управлявате сайта.</p>
+
 @if (!ViewData.ModelState.IsValid) {
-    <div class="notice error">Грешка в данните</div>
+    <div class="notice error">
+        <div>
+            <strong>Нещо не е наред:</strong>
+            <ul class="error-list">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@err.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    </div>
 }
+
+<section class="panel narrow">
+    <div class="panel-head">
+        <span class="panel-icon" aria-hidden="true">🔑</span>
+        <h2>Вход в системата</h2>
+    </div>
+    <form method="post" asp-controller="Account" asp-action="Login">
+        <label class="field">
+            <span class="field-label">Email</span>
+            <input name="email" type="email" required autocomplete="username" placeholder="name@example.com" />
+        </label>
+        <label class="field">
+            <span class="field-label">Парола</span>
+            <input name="password" type="password" required autocomplete="current-password" />
+        </label>
+        <button class="btn primary" type="submit">Вход</button>
+    </form>
+</section>

@@ -1,12 +1,95 @@
 @{
-    ViewBag.Title = "Upload Pair";
+    ViewBag.Title = "Качване на снимки";
 }
-<h1>Качи двойка снимки (Преди/След)</h1>
-<form method="post" enctype="multipart/form-data">
-    <label>Заглавие<input name="title" required /></label>
-    <label>Описание<textarea name="description"></textarea></label>
-    <label>Преди (изображение)<input type="file" name="beforeImage" accept="image/*" required /></label>
-    <label>След (изображение)<input type="file" name="afterImage" accept="image/*" required /></label>
-    <button class="btn primary" type="submit">Качи</button>
+<h1>Добавяне на снимки „Преди / След“</h1>
+<p class="lede">Попълнете стъпките по-долу. След като натиснете бутона накрая, снимките се появяват в галерията на сайта.</p>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="notice error">
+        <div>
+            <strong>Нещо не е наред:</strong>
+            <ul class="error-list">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@err.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+<form class="upload-form" method="post" enctype="multipart/form-data">
+
+    <section class="step">
+        <div class="step-head">
+            <span class="step-num">1</span>
+            <h2>Как да се казва обектът?</h2>
+        </div>
+        <div class="field-row">
+            <label class="field">
+                <span class="field-label">Заглавие</span>
+                <input name="title" required placeholder="Например: Апартамент в Люлин" />
+                <small class="hint">Кратко име, което посетителите ще виждат в галерията.</small>
+            </label>
+            <label class="field">
+                <span class="field-label">Описание <em class="optional">(може да пропуснете)</em></span>
+                <textarea name="description" rows="3" placeholder="Например: Основно почистване след ремонт — кухня и баня."></textarea>
+                <small class="hint">Ако не сте сигурни какво да напишете, оставете полето празно.</small>
+            </label>
+        </div>
+    </section>
+
+    <section class="step">
+        <div class="step-head">
+            <span class="step-num">2</span>
+            <h2>Качете двете снимки</h2>
+        </div>
+        <div class="field-row photo-row">
+
+            <div class="photo-col">
+                <span class="photo-label before">Преди почистването</span>
+                <label class="dropzone">
+                    <input type="file" name="beforeImage" accept="image/jpeg,image/png,image/webp" required />
+                    <span class="dz-empty">
+                        <span class="dz-icon" aria-hidden="true">📷</span>
+                        <span class="dz-title">Натиснете, за да изберете снимка</span>
+                        <span class="dz-hint">или я плъзнете тук · JPG, PNG или WEBP, до 10 MB</span>
+                    </span>
+                    <span class="dz-filled">
+                        <img class="dz-preview" alt="Преглед на снимката преди почистването" />
+                        <span class="dz-info">
+                            <span class="dz-name"></span>
+                            <span class="dz-change">Натиснете, за да смените снимката</span>
+                        </span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="photo-col">
+                <span class="photo-label after">След почистването</span>
+                <label class="dropzone">
+                    <input type="file" name="afterImage" accept="image/jpeg,image/png,image/webp" required />
+                    <span class="dz-empty">
+                        <span class="dz-icon" aria-hidden="true">✨</span>
+                        <span class="dz-title">Натиснете, за да изберете снимка</span>
+                        <span class="dz-hint">или я плъзнете тук · JPG, PNG или WEBP, до 10 MB</span>
+                    </span>
+                    <span class="dz-filled">
+                        <img class="dz-preview" alt="Преглед на снимката след почистването" />
+                        <span class="dz-info">
+                            <span class="dz-name"></span>
+                            <span class="dz-change">Натиснете, за да смените снимката</span>
+                        </span>
+                    </span>
+                </label>
+            </div>
+
+        </div>
+    </section>
+
+    <div class="submit-bar">
+        <button class="btn primary" type="submit">Публикувай в галерията</button>
+        <a class="btn" href="/Admin">Откажи и се върни</a>
+    </div>
 </form>
-<p><a href="/Admin">Назад към панела</a></p>

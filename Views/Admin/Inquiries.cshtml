@@ -1,0 +1,25 @@
+@model IEnumerable<HopMop.Models.Inquiry>
+@{
+    ViewBag.Title = "Inquiries";
+}
+<h1>Запитвания</h1>
+<div class="toolbar">
+    <a class="btn primary" href="/Admin">Назад към панела</a>
+    <a class="btn primary" href="/Users">Потребители</a>
+</div>
+<div class="table-wrap">
+<table class="admin-table">
+    <thead><tr><th>Име</th><th>Email</th><th>Телефон</th><th>Съобщение</th><th>Дата</th></tr></thead>
+    <tbody>
+    @foreach(var i in Model) {
+        <tr>
+            <td>@i.Name</td>
+            <td>@i.Email</td>
+            <td>@i.Phone</td>
+            <td class="msg">@i.Message</td>
+            <td>@i.CreatedAt.ToLocalTime()</td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

@@ -1,0 +1,36 @@
+@model IEnumerable<HopMop.Models.User>
+@{
+    ViewBag.Title = "Users";
+}
+<h1>Потребители</h1>
+@if (TempData["Error"] != null) {
+    <div class="notice error">@TempData["Error"]</div>
+}
+<div class="toolbar">
+    <a class="btn primary" href="/Users/Create">Създай потребител</a>
+    <a class="btn primary" href="/Admin">Назад към панела</a>
+</div>
+<div class="table-wrap">
+<table class="admin-table">
+    <thead><tr><th>Email</th><th>Администратор?</th><th>Действия</th></tr></thead>
+    <tbody>
+    @foreach(var u in Model) {
+        <tr>
+            <td>@u.Email</td>
+            <td>
+                @if (u.IsAdmin) {
+                    <span class="badge gold">Да</span>
+                } else {
+                    <span class="badge">Не</span>
+                }
+            </td>
+            <td>
+                <form method="post" asp-action="Delete" asp-route-id="@u.Id" onsubmit="return confirm('Изтриване?');">
+                    <button class="btn danger sm" type="submit">Изтрий</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+</div>

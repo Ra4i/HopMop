@@ -1,19 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HopMop.Data;
 using HopMop.Models;
-using System.Net.Mail;
 
 namespace HopMop.Controllers
 {
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         private readonly AppDbContext _db;
-        private readonly IConfiguration _cfg;
 
-        public HomeController(AppDbContext db, IConfiguration cfg)
+        public HomeController(AppDbContext db)
         {
             _db = db;
-            _cfg = cfg;
         }
 
         public IActionResult Index()
@@ -56,36 +55,6 @@ namespace HopMop.Controllers
 
             _db.Inquiries.Add(model);
             _db.SaveChanges();
-
-            // Try send email if configured
-            try
-            {
-                var smtp = _cfg.GetSection("Smtp");
-                var host = smtp["Host"];
-                var from = smtp["From"];
-                var to = _cfg["Admin:DefaultEmail"];
-                if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(from) && !string.IsNullOrEmpty(to))
-                {
-                    var port = 25;
-                    if (!int.TryParse(smtp["Port"], out port))
-                    {
-                        port = 25;
-                    }
-
-                    using var client = new SmtpClient(host, port)
-                    {
-                        EnableSsl = true,
-                        Credentials = new System.Net.NetworkCredential(smtp["Username"], smtp["Password"])
-                    };
-                    var msg = new MailMessage(from, to)
-                    {
-                        Subject = "New inquiry from website",
-                        Body = $"Name: {model.Name}\nEmail: {model.Email}\nPhone: {model.Phone}\nMessage:\n{model.Message}"
-                    };
-                    client.Send(msg);
-                }
-            }
-            catch { /* swallow; still saved to DB */ }
 
             TempData["Success"] = "Вашето запитване е изпратено. Ще се свържем с вас скоро!";
             return RedirectToAction("Contact");

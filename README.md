@@ -9,7 +9,7 @@ This app reads settings from `appsettings.json`, environment variables, and a lo
 ### Local secrets
 
 1. Copy `.env.example` to `.env`.
-2. Set values for `Admin__DefaultEmail`, `Admin__DefaultPassword`, and the `Smtp__*` settings.
+2. Set values for `Admin__DefaultEmail` and `Admin__DefaultPassword`.
 3. Do not commit `.env` to source control.
 
 The repository already ignores `.env` and other local secret files via `.gitignore`.
