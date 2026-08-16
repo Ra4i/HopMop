@@ -6,7 +6,8 @@
 <div class="toolbar">
     <a class="btn primary" href="/Admin/Upload">Качване на нова двойка снимки</a>
     @if (Context.User.HasClaim("IsAdmin", "True")) {
-        <a class="btn primary" href="/Admin/Inquiries">Запитвания</a>
+        @* the badge counts only inquiries that are still waiting to be handled *@
+        <a class="btn primary" href="/Admin/Inquiries">Запитвания <span class="badge">@ViewBag.ActiveInquiryCount</span></a>
         <a class="btn primary" href="/Users">Потребители</a>
     }
 </div>

@@ -31,11 +31,6 @@ namespace HopMop.Controllers
             return View();
         }
 
-        public IActionResult Prices()
-        {
-            return View();
-        }
-
         public IActionResult Gallery()
         {
             var items = _db.PhotoPairs.OrderByDescending(p => p.CreatedAt).ToList();

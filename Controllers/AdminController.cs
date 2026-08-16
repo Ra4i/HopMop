@@ -20,14 +20,46 @@ namespace HopMop.Controllers
         public IActionResult Index()
         {
             var items = _db.PhotoPairs.OrderByDescending(p => p.CreatedAt).ToList();
+            // The dashboard badge counts what still needs attention, not the archive.
+            ViewBag.ActiveInquiryCount = _db.Inquiries.Count(i => !i.IsResolved);
             return View(items);
         }
 
+        // Active inquiries — the ones not yet marked as done.
         [Authorize(Policy = "AdminOnly")]
         public IActionResult Inquiries()
         {
-            var items = _db.Inquiries.OrderByDescending(i => i.CreatedAt).ToList();
+            var items = _db.Inquiries
+                .Where(i => !i.IsResolved)
+                .OrderByDescending(i => i.CreatedAt)
+                .ToList();
             return View(items);
+        }
+
+        // The archive: resolved inquiries are kept, only moved out of the way.
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult ResolvedInquiries()
+        {
+            var items = _db.Inquiries
+                .Where(i => i.IsResolved)
+                .OrderByDescending(i => i.ResolvedAt)
+                .ToList();
+            return View(items);
+        }
+
+        [HttpPost]
+        [Authorize(Policy = "AdminOnly")]
+        [ValidateAntiForgeryToken]
+        public IActionResult ResolveInquiry(int id)
+        {
+            var item = _db.Inquiries.Find(id);
+            if (item != null && !item.IsResolved)
+            {
+                item.IsResolved = true;
+                item.ResolvedAt = DateTime.UtcNow;
+                _db.SaveChanges();
+            }
+            return RedirectToAction("Inquiries");
         }
 
         [HttpGet]

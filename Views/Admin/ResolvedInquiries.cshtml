@@ -1,0 +1,32 @@
+@model IEnumerable<HopMop.Models.Inquiry>
+@{
+    ViewBag.Title = "Resolved inquiries";
+
+    var inquiries = Model.ToList();
+}
+<h1>Завършени запитвания</h1>
+<div class="toolbar">
+    <a class="btn primary" href="/Admin">Назад към панела</a>
+    <a class="btn" href="/Admin/Inquiries">Активни запитвания</a>
+    <a class="btn primary" href="/Users">Потребители</a>
+</div>
+
+@if (inquiries.Count == 0)
+{
+    <div class="inq-empty">
+        <span class="inq-empty-icon" aria-hidden="true">✅</span>
+        <h3>Няма завършени запитвания</h3>
+        <p>Запитванията, отбелязани с „Готово“, се събират тук.</p>
+    </div>
+}
+else
+{
+    <p class="inq-count">Завършени запитвания <span class="badge ok">@inquiries.Count</span></p>
+
+    <div class="inq-list" id="inquiry-list">
+        @foreach (var i in inquiries)
+        {
+            <partial name="_InquiryCard" model="i" />
+        }
+    </div>
+}

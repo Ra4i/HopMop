@@ -3,7 +3,7 @@
     ViewBag.Title = "Галерия - ПРЕДИ / СЛЕД";
 }
 <h1>Преди / След</h1>
-<p class="lede">Плъзнете плъзгача върху всяка снимка, за да видите разликата преди и след почистването.</p>
+<p class="lede">Плъзнете плъзгача върху всяка снимка, за да видите разликата преди и след почистването. Натиснете върху карта, за да я разгънете.</p>
 @if (!Model.Any()) {
     <section class="panel">
         <div class="panel-head">
@@ -15,15 +15,26 @@
 } else {
     <div class="gallery-grid">
         @foreach(var item in Model) {
-            <div class="pair">
-                <h3>@item.Title</h3>
-                <p>@item.Description</p>
-                <div class="ba-slider" data-before="@item.BeforeImagePath" data-after="@item.AfterImagePath">
-                    <img class="before" src="@item.BeforeImagePath" alt="Before - @item.Title" draggable="false" />
-                    <img class="after" src="@item.AfterImagePath" alt="After - @item.Title" draggable="false" />
-                    <div class="slider-handle"></div>
+            <article class="pair before-after-card">
+                <h3 class="pair-title">
+                    <button type="button" class="pair-toggle" aria-expanded="false">
+                        <span class="pair-toggle-text">@item.Title</span>
+                        <span class="pair-toggle-icon" aria-hidden="true"></span>
+                    </button>
+                </h3>
+                @if (!string.IsNullOrWhiteSpace(item.Description)) {
+                    <p class="pair-desc">@item.Description</p>
+                }
+                <div class="ba-slider"
+                     role="slider" tabindex="0"
+                     aria-label="Плъзгач преди/след — @item.Title"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+                     data-before="@item.BeforeImagePath" data-after="@item.AfterImagePath">
+                    <img class="before" src="@item.BeforeImagePath" alt="Преди — @item.Title" draggable="false" />
+                    <img class="after" src="@item.AfterImagePath" alt="След — @item.Title" draggable="false" />
+                    <div class="slider-handle" aria-hidden="true"></div>
                 </div>
-            </div>
+            </article>
         }
     </div>
 }

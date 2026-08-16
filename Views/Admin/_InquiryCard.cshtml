@@ -1,0 +1,95 @@
+@using System.Globalization
+@model HopMop.Models.Inquiry
+@*
+    One inquiry card, shared by the active and the resolved list.
+    A resolved inquiry shows when it was completed instead of the "Готово" button.
+*@
+@{
+    // Fixed numeric formats so the dates read the same regardless of the
+    // culture the server happens to run under.
+    const string dateShort = "dd.MM.yyyy";
+    const string dateFull = "dd.MM.yyyy 'г.', HH:mm:ss";
+    var fmt = CultureInfo.InvariantCulture;
+
+    var created = Model.CreatedAt.ToLocalTime();
+    var resolved = Model.ResolvedAt?.ToLocalTime();
+    var bodyId = "inquiry-body-" + Model.Id;
+    var phoneHref = "tel:" + (Model.Phone ?? string.Empty).Replace(" ", string.Empty);
+}
+<article class="inq-card@(Model.IsResolved ? " is-resolved" : "")">
+    <button type="button" class="inq-head" aria-expanded="true" aria-controls="@bodyId">
+        <span class="inq-head-top">
+            <span class="inq-name">
+                @Model.Name
+                @if (Model.IsResolved)
+                {
+                    <span class="badge ok">Завършено</span>
+                }
+            </span>
+            <time class="inq-date" datetime="@created.ToString("s", fmt)">@created.ToString(dateShort, fmt)</time>
+        </span>
+        <span class="inq-email">@Model.Email</span>
+        <span class="inq-preview">@Model.Message</span>
+        <span class="inq-cue">
+            <span class="inq-cue-open">Отвори</span>
+            <span class="inq-cue-close">Затвори</span>
+            <span class="inq-chevron" aria-hidden="true"></span>
+        </span>
+    </button>
+
+    <div class="inq-body" id="@bodyId">
+        <div class="inq-body-inner">
+            <dl class="inq-fields">
+                <dt>Име</dt>
+                <dd>@Model.Name</dd>
+
+                <dt>Email</dt>
+                <dd><a href="mailto:@Model.Email">@Model.Email</a></dd>
+
+                <dt>Телефон</dt>
+                <dd>
+                    @if (string.IsNullOrWhiteSpace(Model.Phone))
+                    {
+                        <span class="inq-none">не е посочен</span>
+                    }
+                    else
+                    {
+                        <a href="@phoneHref">@Model.Phone</a>
+                    }
+                </dd>
+
+                <dt>Дата</dt>
+                <dd>@created.ToString(dateFull, fmt)</dd>
+
+                @if (Model.IsResolved)
+                {
+                    <dt>Завършено на</dt>
+                    <dd>
+                        @if (resolved.HasValue)
+                        {
+                            @resolved.Value.ToString(dateFull, fmt)
+                        }
+                        else
+                        {
+                            <span class="inq-none">няма отбелязана дата</span>
+                        }
+                    </dd>
+                }
+            </dl>
+
+            <div class="inq-message">
+                <h4>Съобщение</h4>
+                <p>@Model.Message</p>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.IsResolved)
+    {
+        <div class="inq-actions">
+            <form method="post" asp-action="ResolveInquiry" asp-route-id="@Model.Id" onsubmit="return confirm('Маркирай като завършено?');">
+                <button class="btn success sm" type="submit">Готово</button>
+            </form>
+        </div>
+    }
+</article>

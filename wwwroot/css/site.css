@@ -127,7 +127,7 @@ main > .container > h1:first-child::after{
   box-shadow:0 1px 6px var(--gold-glow);
 }
 
-/* Content lists (Services / Prices / About) */
+/* Content lists (Services / About) */
 main ul{list-style:none;margin:0 0 1.4em;padding:0;display:grid;gap:10px}
 main ul li{
   position:relative;
@@ -322,6 +322,12 @@ main ul li:hover{
 }
 .btn.danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
 
+/* Success — the danger button's counterpart, for confirming/completing */
+.btn.success{
+  background:var(--ok-bg);color:#0d6b30;border-color:rgba(25,162,74,.28);
+}
+.btn.success:hover{background:var(--ok);color:#fff;border-color:var(--ok)}
+
 .btn.sm{min-height:38px;padding:8px 17px;font-size:.84rem}
 
 /* Buttons sitting on dark panels */
@@ -513,40 +519,151 @@ main ul li:hover{
 .seo-block p{margin-bottom:0;color:var(--muted)}
 
 /* ================================================================
-   8. GALLERY — BEFORE / AFTER
+   8. GALLERY — BEFORE / AFTER  (expandable cards)
+   ------------------------------------------------------------------
+   Without JS the grid stays a plain auto-fit grid. gallery.js adds
+   .is-interactive, which turns it into a single flex row: every card
+   is `flex:1 1 0`, so the focused one simply gets a bigger flex-grow
+   and the rest give way. Nothing here is tied to a card count —
+   --pair-grow is derived from however many cards the row holds.
    ================================================================ */
 .gallery-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
   gap:clamp(18px,3vw,26px);
+  max-width:100%;
+}
+.gallery-grid.is-interactive{
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  gap:clamp(12px,1.6vw,22px);
 }
 
 .pair{
   position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+  min-width:0;
   background:var(--white);
   border:1px solid var(--line);
   border-radius:var(--radius);
   padding:20px;
   box-shadow:var(--shadow-sm);
-  transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease);
+  transition:
+    flex-grow .42s var(--ease),
+    flex-basis .42s var(--ease),
+    box-shadow .38s var(--ease),
+    border-color .38s var(--ease),
+    opacity .38s var(--ease),
+    translate .3s var(--ease);
+}
+/* site.js fades cards in with a .reveal/.in rule whose `transition`
+   shorthand is more specific than the one above — it would wipe out the
+   layout transitions, so the gallery re-states the full list here. The
+   hover lift uses `translate` rather than `transform` precisely so it
+   can coexist with the reveal transform. */
+.js-reveal .gallery-grid .pair.reveal.in{
+  transition:
+    flex-grow .42s var(--ease),
+    flex-basis .42s var(--ease),
+    box-shadow .38s var(--ease),
+    border-color .38s var(--ease),
+    translate .3s var(--ease),
+    opacity .6s var(--ease),
+    transform .6s var(--ease);
 }
 .pair::before{
   content:'';position:absolute;left:0;right:0;top:0;height:3px;
   background:linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-light),var(--gold));
   transform:scaleX(0);transform-origin:left;
   transition:transform .34s var(--ease);
+  z-index:5;
 }
 .pair:hover{
-  transform:translateY(-4px);
+  translate:0 -4px;
   box-shadow:var(--shadow-lg);
   border-color:rgba(212,175,55,.45);
 }
 .pair:hover::before{transform:scaleX(1)}
-.pair h3{margin:0 0 .25em;color:var(--navy-800)}
-.pair p{color:var(--muted);font-size:.92rem;margin:0 0 14px}
+.pair h3,.pair-title{margin:0 0 .25em;color:var(--navy-800);overflow-wrap:anywhere}
+.pair p,.pair-desc{color:var(--muted);font-size:.92rem;margin:0 0 14px;overflow-wrap:anywhere}
+
+/* ── the clickable card itself ── */
+.gallery-grid.is-interactive .before-after-card{
+  flex:1 1 0;
+  cursor:pointer;
+  /* narrow (shrunken) cards trim their own chrome — see @container below */
+  container-type:inline-size;
+  container-name:pair;
+  --ba-h:clamp(170px,15vw,240px);
+}
+.gallery-grid.is-interactive .before-after-card.is-expanded{
+  flex-grow:var(--pair-grow,3);
+  cursor:default;
+  border-color:rgba(212,175,55,.55);
+  box-shadow:var(--shadow-lg),0 0 0 1px rgba(212,175,55,.30);
+  --ba-h:clamp(230px,25vw,380px);
+}
+.gallery-grid.is-interactive .before-after-card.is-expanded::before{transform:scaleX(1)}
+.gallery-grid.is-interactive .before-after-card.is-expanded:hover{translate:0 0}
+/* the rest stay fully visible, just a shade quieter */
+.gallery-grid.has-expanded .before-after-card:not(.is-expanded){opacity:.88}
+
+/* Stacked column — used on narrow screens and whenever gallery.js decides
+   the row holds too many cards to stay readable side by side. */
+.gallery-grid.is-interactive.is-stacked{flex-direction:column;flex-wrap:nowrap}
+.gallery-grid.is-interactive.is-stacked .before-after-card{
+  flex:0 0 auto;width:100%;
+  --ba-h:clamp(190px,50vw,300px);
+}
+.gallery-grid.is-interactive.is-stacked .before-after-card.is-expanded{
+  flex-grow:0;
+  --ba-h:clamp(260px,72vw,420px);
+}
+
+/* ── title doubles as the expand/collapse control ── */
+.pair-toggle{
+  display:flex;align-items:center;gap:10px;
+  width:100%;margin:0;padding:0;
+  border:0;background:none;
+  font:inherit;color:inherit;text-align:left;
+  cursor:pointer;
+}
+.pair-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:8px}
+.pair-toggle-text{min-width:0;overflow-wrap:anywhere}
+.pair-toggle-icon{
+  flex:0 0 auto;margin-left:auto;
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;line-height:1;
+  color:var(--navy-900);
+  background:var(--gold-pale);
+  border:1px solid rgba(168,128,29,.35);
+  transition:background .3s var(--ease),box-shadow .3s var(--ease);
+}
+.pair-toggle-icon::before{content:'+'}
+.is-expanded .pair-toggle-icon{
+  background:linear-gradient(135deg,var(--gold-light),var(--gold));
+  box-shadow:0 0 12px var(--gold-glow);
+}
+.is-expanded .pair-toggle-icon::before{content:'\2212'}
+
+/* Description is clamped while the card is small. max-height carries the
+   animation (line-clamp itself cannot be transitioned), so the card grows
+   smoothly instead of popping when more lines are revealed. */
+.pair-desc{
+  display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:2;line-clamp:2;
+  line-height:1.5;max-height:3em;
+  overflow:hidden;
+  transition:max-height .42s var(--ease);
+}
+.is-expanded .pair-desc{-webkit-line-clamp:6;line-clamp:6;max-height:9em}
 
 .ba-slider{
   position:relative;overflow:hidden;
+  flex:1 1 auto;
+  min-height:var(--ba-h,220px);
   border-radius:var(--radius-sm);
   border:1px solid var(--line);
   cursor:ew-resize;
@@ -554,10 +671,17 @@ main ul li:hover{
   touch-action:none;
   background:var(--wash);
   box-shadow:inset 0 0 0 1px rgba(212,175,55,.10);
+  transition:min-height .42s var(--ease);
 }
-.ba-slider img{width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none}
-.ba-slider .before{display:block;width:100%;height:100%;object-fit:cover;position:relative;z-index:1}
-.ba-slider .after{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 50%);z-index:2;pointer-events:none}
+.ba-slider:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.ba-slider.is-dragging{cursor:grabbing}
+.ba-slider img{
+  position:absolute;inset:0;
+  width:100%;height:100%;object-fit:cover;display:block;
+  user-select:none;-webkit-user-select:none;-webkit-user-drag:none;
+}
+.ba-slider .before{z-index:1}
+.ba-slider .after{clip-path:inset(0 0 0 50%);z-index:2;pointer-events:none}
 .ba-slider .slider-handle{
   position:absolute;left:50%;top:0;bottom:0;width:2px;z-index:3;
   background:linear-gradient(180deg,transparent,var(--gold-light) 12%,var(--gold) 50%,var(--gold-light) 88%,transparent);
@@ -595,6 +719,41 @@ main ul li:hover{
   background:linear-gradient(135deg,var(--gold-light),var(--gold));
   color:var(--navy-950);border:1px solid rgba(168,128,29,.45);
   box-shadow:0 2px 10px var(--gold-glow);
+}
+
+/* ── shrunken cards drop the chrome that no longer fits ──
+   Width-based, not count-based, so it holds for 2 cards or 20. */
+@container pair (max-width:250px){
+  .pair-desc{display:none}
+  .pair-title{font-size:.98rem}
+  .pair-toggle{gap:6px}
+  .pair-toggle-icon{width:22px;height:22px;font-size:13px}
+  .ba-slider::before,.ba-slider::after{display:none}
+  .ba-slider .slider-handle::after{width:30px;height:30px;font-size:12px}
+}
+@container pair (max-width:170px){
+  .pair-toggle-icon{display:none}
+  .ba-slider .slider-handle::after{width:24px;height:24px;font-size:0}
+}
+
+/* ── phones / tablets: stack the cards, expand downwards ── */
+@media (max-width:900px){
+  .gallery-grid.is-interactive{flex-direction:column;flex-wrap:nowrap}
+  .gallery-grid.is-interactive .before-after-card{
+    flex:0 0 auto;width:100%;
+    --ba-h:clamp(190px,50vw,300px);
+  }
+  .gallery-grid.is-interactive .before-after-card.is-expanded{
+    flex-grow:0;
+    --ba-h:clamp(260px,72vw,420px);
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .pair,
+  .js-reveal .gallery-grid .pair.reveal.in,
+  .ba-slider,.pair-desc,.pair-toggle-icon{transition:none !important}
+  .pair:hover{translate:none}
 }
 
 /* ================================================================
@@ -949,9 +1108,201 @@ form button[type="submit"]{width:100%;margin-top:6px}
   color:var(--navy-950);border-color:var(--gold-dark);
   box-shadow:0 2px 8px rgba(212,175,55,.28);
 }
+.badge.ok{background:var(--ok-bg);color:#0d6b30;border-color:rgba(25,162,74,.3)}
+/* counter riding inside a button — dark pill so it reads on the gold gradient */
+.btn .badge{padding:2px 10px;font-size:.7rem;line-height:1.5}
+.btn.primary .badge{
+  background:var(--navy-900);color:var(--gold-light);
+  border-color:rgba(5,14,34,.4);box-shadow:none;
+}
 
 /* toolbar row of buttons above a table */
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 24px}
+
+/* ================================================================
+   12b. ADMIN INQUIRIES — collapsible message cards
+   Each inquiry is a card: collapsed it shows a preview, clicking the
+   header expands it to the full record. Cards render open and only
+   become collapsible once inquiries.js has run.
+   ================================================================ */
+.inq-count{
+  display:flex;align-items:center;gap:10px;
+  margin:0 0 16px;
+  font-family:Manrope,sans-serif;
+  font-size:.74rem;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);
+}
+
+.inq-list{display:flex;flex-direction:column;gap:14px;margin:0 0 28px}
+
+.inq-card{
+  position:relative;overflow:hidden;
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  transition:border-color .24s var(--ease),box-shadow .24s var(--ease),transform .24s var(--ease);
+}
+/* gold left edge, revealed on hover and while open */
+.inq-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;z-index:1;
+  background:linear-gradient(180deg,var(--gold-light),var(--gold),var(--gold-dark));
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .24s var(--ease);
+}
+.inq-list.is-collapsible .inq-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(212,175,55,.45);
+  box-shadow:var(--shadow);
+}
+.inq-card:hover::before,.inq-card.is-open::before{transform:scaleX(1)}
+.inq-card.is-open{border-color:rgba(212,175,55,.5);box-shadow:var(--shadow)}
+
+/* ── header: the clickable part ── */
+.inq-head{
+  display:flex;flex-direction:column;gap:6px;
+  width:100%;margin:0;padding:16px 18px;
+  font:inherit;color:inherit;text-align:left;
+  background:transparent;border:0;
+  cursor:default;
+  transition:background .2s var(--ease);
+}
+.inq-list.is-collapsible .inq-head{cursor:pointer}
+.inq-list.is-collapsible .inq-head:hover{background:var(--gold-pale)}
+.inq-head:focus-visible{outline:3px solid var(--blue-500);outline-offset:-3px}
+
+.inq-head-top{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:8px 14px;flex-wrap:wrap;
+}
+.inq-name{
+  font-family:Manrope,sans-serif;font-size:1.02rem;font-weight:700;
+  color:var(--navy-900);overflow-wrap:anywhere;
+}
+.inq-date{
+  font-size:.82rem;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.inq-email{
+  font-size:.9rem;font-weight:600;color:var(--blue-500);
+  overflow-wrap:anywhere;
+}
+/* two-line teaser of the message — never widens the card */
+.inq-preview{
+  display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:2;line-clamp:2;
+  overflow:hidden;
+  font-size:.94rem;color:var(--muted);overflow-wrap:anywhere;
+}
+.inq-card.is-open .inq-preview{display:none}
+
+/* ── open / close cue ── */
+.inq-cue{
+  display:none;align-items:center;gap:7px;align-self:flex-end;
+  font-family:Manrope,sans-serif;
+  font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--navy-700);
+}
+.inq-list.is-collapsible .inq-cue{display:inline-flex}
+.inq-cue-close{display:none}
+.inq-card.is-open .inq-cue-open{display:none}
+.inq-card.is-open .inq-cue-close{display:inline}
+.inq-chevron{
+  width:8px;height:8px;flex-shrink:0;
+  border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);
+  transition:transform .28s var(--ease);
+}
+.inq-card.is-open .inq-chevron{transform:translateY(2px) rotate(-135deg)}
+.inq-list.is-collapsible .inq-head:hover .inq-cue{color:var(--gold-dark)}
+
+/* ── body: animated open/close via grid row sizing ── */
+.inq-body{
+  display:grid;grid-template-rows:1fr;
+  opacity:1;visibility:visible;
+  transition:grid-template-rows .3s var(--ease),opacity .24s var(--ease),visibility 0s;
+}
+.inq-list.is-collapsible .inq-card:not(.is-open) .inq-body{
+  grid-template-rows:0fr;opacity:0;visibility:hidden;
+  transition:grid-template-rows .3s var(--ease),opacity .2s var(--ease),visibility 0s linear .3s;
+}
+.inq-body-inner{
+  overflow:hidden;min-height:0;
+  padding:0 18px 18px;
+}
+
+.inq-fields{
+  display:grid;grid-template-columns:auto minmax(0,1fr);
+  gap:6px 18px;
+  margin:0;padding-top:16px;
+  border-top:1px solid var(--line);
+}
+.inq-fields dt{
+  font-family:Manrope,sans-serif;
+  font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);padding-top:4px;
+}
+.inq-fields dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.inq-none{color:var(--muted);font-style:italic}
+
+.inq-message{
+  margin-top:16px;padding:14px 16px;
+  background:var(--blue-050);
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+}
+.inq-message h4{
+  margin:0 0 6px;
+  font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);
+}
+/* keeps the sender's line breaks, breaks unbroken strings instead of scrolling */
+.inq-message p{
+  margin:0;color:var(--ink);
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+
+/* ── per-card actions (mark as done) ── */
+.inq-actions{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:10px 18px;
+  background:var(--wash);
+  border-top:1px solid var(--line);
+}
+/* the global form rules would stretch this button across the card */
+.inq-actions form{margin:0;max-width:none}
+.inq-actions form button[type="submit"]{width:auto;margin:0}
+
+/* resolved cards sit quieter than active ones */
+.inq-card.is-resolved{background:var(--wash);box-shadow:none}
+.inq-card.is-resolved .inq-name{color:var(--navy-700)}
+.inq-name .badge{margin-left:8px;vertical-align:middle}
+
+/* without JS the full body is already visible — hide the collapsed-state bits */
+.inq-list:not(.is-collapsible) .inq-preview,
+.inq-list:not(.is-collapsible) .inq-cue{display:none}
+
+.inq-empty{
+  padding:clamp(28px,6vw,52px);
+  text-align:center;color:var(--muted);
+  background:var(--wash);
+  border:1px dashed var(--line);
+  border-radius:var(--radius);
+}
+.inq-empty-icon{display:block;margin-bottom:10px;font-size:2rem;line-height:1}
+.inq-empty h3{margin:0 0 .35em;color:var(--navy-800)}
+.inq-empty p{margin:0}
+
+@media (max-width:560px){
+  .inq-head{padding:14px}
+  .inq-body-inner{padding:0 14px 14px}
+  .inq-actions{padding:10px 14px}
+  .inq-fields{grid-template-columns:minmax(0,1fr);gap:2px}
+  .inq-fields dt{padding-top:10px}
+  .inq-fields dt:first-of-type{padding-top:0}
+  .inq-cue{align-self:flex-start}
+}
 
 /* ================================================================
    13. FOOTER — matches the header
@@ -1136,4 +1487,8 @@ form button[type="submit"]{width:100%;margin-top:6px}
   .eyebrow{color:#000;border-color:#999;box-shadow:none}
   .card,.pair,.table-wrap{box-shadow:none;border-color:#ccc}
   .admin-table th{background:#eee;color:#000}
+  /* print every inquiry in full, regardless of what is expanded on screen */
+  .inq-card{box-shadow:none;border-color:#ccc;break-inside:avoid;transform:none}
+  .inq-preview,.inq-cue,.inq-actions{display:none !important}
+  .inq-body{grid-template-rows:1fr !important;opacity:1 !important;visibility:visible !important}
 }

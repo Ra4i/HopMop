@@ -13,5 +13,10 @@ namespace HopMop.Models
         [Required]
         public string Message { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Resolved inquiries stay in the database — they are only hidden from
+        // the active list and moved to the "completed" view.
+        public bool IsResolved { get; set; } = false;
+        public DateTime? ResolvedAt { get; set; }
     }
 }
