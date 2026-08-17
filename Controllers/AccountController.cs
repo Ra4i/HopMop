@@ -4,6 +4,7 @@ using HopMop.Data;
 using HopMop.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 
@@ -14,15 +15,27 @@ namespace HopMop.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IPasswordHasher<User> _hasher;
+        private readonly ILogger<AccountController> _log;
 
-        public AccountController(AppDbContext db, IPasswordHasher<User> hasher)
+        // Verified against when the email is unknown, so a failed login costs the
+        // same time whether or not the account exists. Without it the response
+        // time alone tells an attacker which emails are registered.
+        private static readonly string DummyHash =
+            new PasswordHasher<User>().HashPassword(new User { Email = "n/a" }, "not-a-real-password");
+
+        public AccountController(AppDbContext db, IPasswordHasher<User> hasher, ILogger<AccountController> log)
         {
             _db = db;
             _hasher = hasher;
+            _log = log;
         }
 
         [HttpGet]
-        public IActionResult Login() => View("~/Views/Admin/Login.cshtml");
+        public IActionResult Login(string? returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View("~/Views/Admin/Login.cshtml");
+        }
 
         [HttpGet]
         public IActionResult AccessDenied()
@@ -33,31 +46,61 @@ namespace HopMop.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string email, string password)
+        [EnableRateLimiting(RateLimitPolicies.Login)]
+        public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
+
+            // One message for every failure mode: saying "no such user" or "wrong
+            // password" would confirm which emails have accounts.
+            const string failure = "Невалиден email или парола.";
+
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
-                ModelState.AddModelError("", "Невалиден email или парола.");
+                ModelState.AddModelError("", failure);
                 return View("~/Views/Admin/Login.cshtml");
             }
 
-            var user = _db.Users.FirstOrDefault(u => u.Email == email);
-            if (user == null)
+            var normalized = email.Trim().ToLowerInvariant();
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalized);
+
+            var res = user is null
+                ? _hasher.VerifyHashedPassword(new User { Email = normalized }, DummyHash, password)
+                : _hasher.VerifyHashedPassword(user, user.PasswordHash, password);
+
+            if (user is null || res == PasswordVerificationResult.Failed)
             {
-                ModelState.AddModelError("", "Невалиден email или парола.");
+                _log.LogWarning("Failed login attempt for {Email} from {Ip}.",
+                    normalized, HttpContext.Connection.RemoteIpAddress);
+                ModelState.AddModelError("", failure);
                 return View("~/Views/Admin/Login.cshtml");
             }
 
-            var res = _hasher.VerifyHashedPassword(user, user.PasswordHash, password);
-            if (res == PasswordVerificationResult.Failed)
+            // The stored hash used older parameters — rewrite it with the current
+            // ones now that the plaintext is known to be correct.
+            if (res == PasswordVerificationResult.SuccessRehashNeeded)
             {
-                ModelState.AddModelError("", "Невалиден email или парола.");
-                return View("~/Views/Admin/Login.cshtml");
+                user.PasswordHash = _hasher.HashPassword(user, password);
+                _db.SaveChanges();
             }
 
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email), new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), new Claim("IsAdmin", user.IsAdmin.ToString()) };
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim("IsAdmin", user.IsAdmin.ToString())
+            };
             var id = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
+
+            _log.LogInformation("User {Email} signed in.", user.Email);
+
+            // IsLocalUrl blocks an open redirect: a crafted ?returnUrl pointing at
+            // another site would otherwise bounce the user off after login.
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
             return RedirectToAction("Index", "Admin");
         }
 

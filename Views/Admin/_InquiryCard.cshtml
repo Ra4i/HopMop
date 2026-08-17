@@ -87,7 +87,7 @@
     @if (!Model.IsResolved)
     {
         <div class="inq-actions">
-            <form method="post" asp-action="ResolveInquiry" asp-route-id="@Model.Id" onsubmit="return confirm('Маркирай като завършено?');">
+            <form method="post" asp-action="ResolveInquiry" asp-route-id="@Model.Id" data-confirm="Маркирай като завършено?">
                 <button class="btn success sm" type="submit">Готово</button>
             </form>
         </div>

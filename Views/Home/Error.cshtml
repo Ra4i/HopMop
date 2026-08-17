@@ -1,0 +1,30 @@
+@{
+    var status = ViewBag.StatusCode as int? ?? 500;
+
+    var (heading, detail) = status switch
+    {
+        404 => ("Страницата не е намерена",
+                "Адресът, който отворихте, не съществува. Проверете линка или се върнете към началната страница."),
+        403 => ("Нямате достъп",
+                "Тази част от сайта е само за администратори."),
+        429 => ("Твърде много заявки",
+                "Изпратихте твърде много заявки за кратко време. Изчакайте няколко минути и опитайте отново."),
+        _   => ("Възникна грешка",
+                "Нещо се обърка при обработката на заявката. Опитайте отново след малко.")
+    };
+
+    ViewBag.Title = heading + " - HopMop";
+}
+
+<section class="panel error-page">
+    <div class="panel-head">
+        <span class="panel-icon" aria-hidden="true">⚠️</span>
+        <h1>@heading</h1>
+    </div>
+    <p class="lede">@detail</p>
+    <p class="hint">Код на грешката: @status</p>
+    <p>
+        <a class="btn primary" href="/">Към началната страница</a>
+        <a class="btn" href="/Home/Contact">Свържете се с нас</a>
+    </p>
+</section>

@@ -21,7 +21,7 @@
             <td>@p.CreatedAt.ToLocalTime()</td>
             <td>
                 @if (Context.User.HasClaim("IsAdmin", "True")) {
-                    <form method="post" asp-action="Delete" asp-route-id="@p.Id" onsubmit="return confirm('Изтриване?');">
+                    <form method="post" asp-action="Delete" asp-route-id="@p.Id" data-confirm="Изтриване на тази двойка снимки?">
                         <button class="btn danger sm" type="submit">Изтрий</button>
                     </form>
                 }

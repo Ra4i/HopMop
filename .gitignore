@@ -43,8 +43,18 @@ logs/
 # Database files (SQLite)
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 hopmop.db
+
+# Data protection key ring — these sign the auth cookies and are secrets.
+keys/
+
+# Admin-uploaded gallery images. The few sample images already committed stay
+# tracked; this only stops new uploads from being committed by accident.
+# On a server this folder must be backed by persistent storage.
+wwwroot/uploads/
 
 # Environment files and local overrides
 .env

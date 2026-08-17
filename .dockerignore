@@ -1,0 +1,59 @@
+# Keeps the build context small and, more importantly, keeps local secrets and
+# local data out of the image. Anything listed here is invisible to `COPY . .`.
+
+# Build output
+bin/
+obj/
+out/
+publish/
+
+# Secrets and local configuration — a .env copied into the image would ship
+# real credentials inside every layer.
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.Development.json
+appsettings.Local.json
+
+# Cookie-signing keys. These are secrets, and on Render they come from the
+# mounted disk at /data/keys instead.
+keys/
+
+# Local SQLite database. The deployed app uses /data/hopmop.db on the disk;
+# copying a local file in would overwrite nothing but does leak local data.
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Version control and CI
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Editors and IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+_ReSharper*/
+
+# Docker's own files
+Dockerfile*
+.dockerignore
+
+# Docs and tooling that have no effect at runtime
+README.md
+LICENSE
+.claude/
+
+# OS noise
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
+node_modules/

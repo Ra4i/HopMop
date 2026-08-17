@@ -25,7 +25,7 @@
                 }
             </td>
             <td>
-                <form method="post" asp-action="Delete" asp-route-id="@u.Id" onsubmit="return confirm('Изтриване?');">
+                <form method="post" asp-action="Delete" asp-route-id="@u.Id" data-confirm="Изтриване на потребителя @u.Email?">
                     <button class="btn danger sm" type="submit">Изтрий</button>
                 </form>
             </td>

@@ -1,5 +1,16 @@
 // Progressive visual enhancements. Everything here is optional polish —
 // the site renders and works identically with JS disabled.
+// Confirmation for destructive forms. This lives here rather than in an
+// onsubmit="" attribute because the Content-Security-Policy sets
+// script-src 'self', which blocks inline handlers. One delegated listener
+// covers every current and future form that carries data-confirm.
+document.addEventListener('submit', function (e) {
+  var form = e.target.closest('form[data-confirm]');
+  if (form && !window.confirm(form.getAttribute('data-confirm'))) {
+    e.preventDefault();
+  }
+}, true);
+
 document.addEventListener('DOMContentLoaded', function () {
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

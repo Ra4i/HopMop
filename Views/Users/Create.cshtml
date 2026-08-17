@@ -6,8 +6,12 @@
     <div class="notice error">@ViewData.ModelState[""]?.Errors.FirstOrDefault()?.ErrorMessage</div>
 }
 <form method="post">
-    <label>Email<input name="email" type="email" required /></label>
-    <label>Парола<input name="password" type="password" required /></label>
+    <label>Email<input name="email" type="email" required maxlength="254" autocomplete="off" /></label>
+    <label>
+        Парола
+        <input name="password" type="password" required minlength="10" autocomplete="new-password" />
+        <small class="hint">Поне 10 символа. Използвайте дълга, уникална парола.</small>
+    </label>
     <label class="check"><input name="isAdmin" type="checkbox" value="true" />Администратор</label>
     <button class="btn primary" type="submit">Създай</button>
 </form>

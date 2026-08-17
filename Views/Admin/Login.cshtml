@@ -24,6 +24,9 @@
         <h2>Вход в системата</h2>
     </div>
     <form method="post" asp-controller="Account" asp-action="Login">
+        @* Carries the page the visitor was sent here from. The controller only
+           honours it when Url.IsLocalUrl says it points back at this site. *@
+        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
         <label class="field">
             <span class="field-label">Email</span>
             <input name="email" type="email" required autocomplete="username" placeholder="name@example.com" />

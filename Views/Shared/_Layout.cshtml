@@ -1,9 +1,21 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Config
+@{
+    // Contact details live in configuration so they can be corrected in one
+    // place (appsettings.json or a Site__Phone environment variable) rather
+    // than being hard-coded into every view.
+    var phone = Config["Site:Phone"] ?? "+359 88 800 0000";
+    var phoneHref = "tel:" + phone.Replace(" ", string.Empty);
+    var viberChat = Config["Site:ViberChatUrl"];
+}
 <!DOCTYPE html>
 <html lang="bg">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>@ViewBag.Title ?? "HopMop Ltd."</title>
+    @* The parentheses matter: without them Razor renders the expression as
+       "<title>" plus the literal text ?? "HopMop Ltd." *@
+    <title>@(ViewBag.Title ?? "HopMop Ltd.")</title>
     <meta name="description" content="Почистване София - HopMop ЕООД. Професионална почистваща фирма за домове и бизнес." />
     <meta property="og:title" content="HopMop Ltd. - Чистота, на която можеш да разчиташ!" />
     <meta property="og:description" content="Почистване София, основно почистване, почистване след ремонт. HopMop ЕООД" />
@@ -32,8 +44,11 @@
                 <a href="/Home/Contact">Контакти</a>
             </nav>
             <div class="header-cta">
-                <a class="phone" href="tel:+359888000000">+359 88 800 0000</a>
-                <a class="viber" href="https://invite.viber.com/?g=usTwEJhk_1azRHTPn-Pk8w4F6wS8d7jL">Viber</a>
+                <a class="phone" href="@phoneHref">@phone</a>
+                @if (!string.IsNullOrWhiteSpace(viberChat))
+                {
+                    <a class="viber" href="@viberChat" rel="noopener noreferrer">Viber</a>
+                }
             </div>
         </div>
     </header>
@@ -52,8 +67,11 @@
 
     <!-- Sticky action buttons -->
     <div class="sticky-actions">
-        <a class="sticky-phone" href="tel:+359888000000" aria-label="Call">📞</a><!-- Трябва да опарвя номера!!!!!!-->
-        <a class="sticky-viber" href="viber://chat?number=%2B359887199380" aria-label="Viber">💬</a> <!-- Трябва да опарвя номера!!!!!!-->
+        <a class="sticky-phone" href="@phoneHref" aria-label="Обади се">📞</a>
+        @if (!string.IsNullOrWhiteSpace(viberChat))
+        {
+            <a class="sticky-viber" href="@viberChat" aria-label="Viber">💬</a>
+        }
     </div>
 </body>
 </html>

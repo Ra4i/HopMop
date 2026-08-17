@@ -1,5 +1,11 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Config
 @{
     ViewBag.Title = "Услуги - HopMop";
+
+    var phone = Config["Site:Phone"] ?? "+359 88 800 0000";
+    var phoneHref = "tel:" + phone.Replace(" ", string.Empty);
+    var viberChat = Config["Site:ViberChatUrl"];
 }
 <h1>Услуги</h1>
 <p class="lede">Предлагаме широка гама от почистващи услуги, оптимизирани за домове и бизнес.</p>
@@ -27,6 +33,10 @@
     <p>За индивидуална оферта използвайте формата за контакт или се обадете директно — ще ви отговорим в рамките на деня.</p>
     <div class="toolbar">
         <a class="btn primary" href="/Home/Contact">Изпратете запитване</a>
-        <a class="btn outline" href="tel:+359888000000">Обадете се</a>
+        <a class="btn outline" href="@phoneHref">Обадете се</a>
+        @if (!string.IsNullOrWhiteSpace(viberChat))
+        {
+            <a class="btn outline" href="@viberChat" rel="noopener noreferrer">Пишете ни във Viber</a>
+        }
     </div>
 </section>
