@@ -30,7 +30,8 @@ ENV ASPNETCORE_URLS=http://+:8080
 
 # The database is a hosted Neon PostgreSQL instance, so no connection string is
 # baked in here — it is a secret and must be supplied by the host as
-# ConnectionStrings__DefaultConnection.
+# ConnectionStrings__DefaultConnection (or DATABASE_URL). Either the
+# postgresql://... URI or the Host=...;Database=... form is accepted.
 
 # The data protection key ring stays on the mounted disk: it signs the auth cookies, so keeping it
 # in the container would sign every admin out on each deploy.

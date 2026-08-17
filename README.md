@@ -59,16 +59,53 @@ SQLite file. There is no database file to keep, back up, or mount a disk for; th
 data lives in the Neon project.
 
 The connection string is a secret and is **not** in `appsettings.json`. Supply it
-as an environment variable (or in a local `.env` file):
+as an environment variable (or in a local `.env` file). Paste it straight from the
+Neon dashboard — **both forms Neon offers are accepted**, and are normalised into
+what Npgsql expects at startup:
 
 ```
-ConnectionStrings__DefaultConnection=Host=...;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true
+ConnectionStrings__DefaultConnection=postgresql://user:password@ep-xxx-pooler.eu-central-1.aws.neon.tech/dbname?sslmode=require
+ConnectionStrings__DefaultConnection=Host=ep-xxx-pooler.eu-central-1.aws.neon.tech;Database=dbname;Username=user;Password=password
 ```
 
-Copy the host, database, username, and password from the Neon dashboard. Neon
-accepts TLS connections only, so `SSL Mode=Require` must stay. Without this
-variable set the app fails to start, which is deliberate — it will not silently
-fall back to anything.
+`DATABASE_URL` is read as a fallback, so an environment provisioned by Neon's own
+Vercel integration works without renaming anything; the key above wins when both
+are set. Without either the app fails to start with an explicit message, which is
+deliberate — it will not silently fall back to anything.
+
+Prefer the **Pooled connection** string from the dashboard. The app opens a
+connection per request, which is what the pooled endpoint (the `-pooler` host) is
+for; when it detects one it also stops Npgsql resetting each connection on
+release, since PgBouncer already hands back a clean one.
+
+### What the app fills in for you
+
+Everything below is applied only where your connection string is silent, so an
+explicit value always wins:
+
+| Setting | Why |
+| --- | --- |
+| `SSL Mode=VerifyFull` | Npgsql's `Require` encrypts but never checks the certificate, so it protects against eavesdropping and not against an impostor server. Neon presents a publicly trusted certificate, so `VerifyFull` needs no extra setup, and it is what Neon's own .NET guidance specifies. A weaker mode in your string — including the `sslmode=require` the dashboard hands out — is **raised** to `VerifyFull` and the change is logged. Set `Database__AllowUnverifiedTls=true` to keep it as supplied. |
+| `Channel Binding=Require` | Binds authentication to the TLS channel, per Neon's .NET guidance. |
+| `Timeout=30`, `Command Timeout=60` | Raised from Npgsql's 15s/30s. A Neon compute that has auto-suspended has to wake before it can answer, and whoever connects first pays for that. |
+| `No Reset On Close=true` | Pooled (`-pooler`) hosts only. Saves a round trip per request. |
+
+`Trust Server Certificate` is not needed and is ignored — Npgsql 8 marked it
+obsolete, so `SSL Mode` alone governs TLS.
+
+### Auto-suspend and cold starts
+
+Neon suspends an idle compute and only wakes it when something connects again, so
+the first query after a quiet period can be slow or fail outright. Two things make
+that a delay rather than an error:
+
+- Queries run through EF Core's retrying execution strategy
+  (`EnableRetryOnFailure`), so a dropped or timed-out first connection is retried
+  instead of reaching the visitor as an error page.
+- The startup schema check runs through the same strategy. A redeploy that lands
+  while the compute is suspended therefore waits for the wake-up instead of
+  crashing on boot — which, on a host that restarts failed deploys, would
+  otherwise loop.
 
 The schema is still created by `EnsureCreated()` at startup rather than by EF
 Core Migrations, so pointing the app at an empty Neon database is all the setup
@@ -89,19 +126,23 @@ In configuration keys, a double underscore maps to a nested section:
 
 | Key | Default | What it does |
 | --- | --- | --- |
-| `ConnectionStrings__DefaultConnection` | — (required) | Npgsql connection string for the Neon PostgreSQL database. Not stored in `appsettings.json`; the app will not start without it. |
+| `ConnectionStrings__DefaultConnection` | — (required) | Connection string for the Neon PostgreSQL database, in either the `postgresql://...` or `Host=...` form. Not stored in `appsettings.json`; the app will not start without it. |
+| `DATABASE_URL` | — | Fallback for the key above, for environments Neon's integrations provision. Ignored when `ConnectionStrings__DefaultConnection` is set. |
+| `Database__AllowUnverifiedTls` | `false` | Keeps a weaker `SSL Mode` from the connection string instead of raising it to `VerifyFull`. Only for a runtime with no usable CA bundle. |
 | `Admin__DefaultEmail` | — | Email of the seeded first admin. Only used when no users exist. |
 | `Admin__DefaultPassword` | — | Password of the seeded first admin. Only used when no users exist. |
-| `Site__Phone` | `+359 88 800 0000` | Phone number shown in the header, footer button, and contact page. |
-| `Site__ViberChatUrl` | empty | Viber chat link used by the header, the floating button, the services page, and the contact page. All of them are hidden when empty. |
+| `Site__Phone` | `+359 87 900 3512` | Phone number shown on the home page, in the header, the footer button, the services page, and the contact page. |
+| `Site__ViberChatUrl` | `viber://chat?number=%2B359879003512` | Viber chat link used by the header, the floating button, the services page, and the contact page. All of them are hidden when the value is empty. |
 | `Security__RequireHttps` | `true` in Production | Redirects HTTP to HTTPS. See the proxy note below. |
 | `Security__HttpsPort` | `443` | Port the HTTPS redirect points at. Change only if TLS is served on a non-standard port. |
 | `DataProtection__KeyRingPath` | `keys/` under the app folder | Where the cookie-signing keys are stored. |
 | `ASPNETCORE_ENVIRONMENT` | `Production` | Must **not** be `Development` on a public server. |
 
-> **The phone numbers in `appsettings.json` are placeholders.** Set `Site__Phone`
-> and `Site__ViberChatUrl` to the real values before going live. The Viber
-> buttons stay hidden while their value is empty.
+> **Change the contact details in one place.** Every view reads `Site__Phone` and
+> `Site__ViberChatUrl` from configuration, so `appsettings.json` (or the matching
+> environment variables) is the only place to edit. Keep the two in step: the
+> Viber URL is the same number with the spaces removed and the leading `+`
+> written as `%2B`. The Viber buttons stay hidden while the value is empty.
 
 ### Secrets
 
