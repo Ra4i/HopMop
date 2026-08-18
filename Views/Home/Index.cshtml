@@ -1,5 +1,13 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Config
 @{
     ViewBag.Title = "HopMop — Home";
+
+    // Read from configuration like every other view: this button used to carry a
+    // hard-coded number, so correcting Site__Phone left the most prominent call
+    // link on the site still pointing at the old one.
+    var phone = Config["Site:Phone"] ?? "+359 87 900 3512";
+    var phoneHref = "tel:" + phone.Replace(" ", string.Empty);
 }
 <section class="hero">
     <div class="hero-inner">
@@ -7,7 +15,7 @@
         <h1>Чистота, на която можеш да <span class="gold">разчиташ</span>.</h1>
         <p>Професионални почистващи услуги в София и региона — основно почистване, абонаментно почистване, почистване след ремонт и много повече.</p>
         <div class="hero-ctas">
-            <a class="btn primary" href="tel:+359888000000">Обадете се: +359 88 800 0000</a>
+            <a class="btn primary" href="@phoneHref">Обадете се: @phone</a>
             <a class="btn outline" href="/Home/Contact">Изпратете запитване</a>
         </div>
     </div>

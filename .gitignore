@@ -88,3 +88,6 @@ Desktop.ini
 *~
 *.swp
 
+
+# Local MCP server configuration -- kept out of the repo on request.
+.mcp.json

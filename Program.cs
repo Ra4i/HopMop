@@ -76,8 +76,22 @@ builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
     .SetApplicationName("HopMop");
 
+// Resolved once here rather than inline so a missing or unparseable value fails
+// with an explanation at startup, instead of surfacing as an Npgsql error on the
+// first request.
+var database = NeonConnection.Resolve(builder.Configuration);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(database.ConnectionString, npgsql =>
+        // Neon suspends an idle compute and only wakes it when something connects
+        // again, so the first query after a quiet period can time out or be
+        // dropped through no fault of the query. Without this the visitor who
+        // happens to arrive first gets the error page. The retries are what turn
+        // a wake-up into a slow request rather than a failed one.
+        npgsql.EnableRetryOnFailure(
+            maxRetryCount: 6,
+            maxRetryDelay: TimeSpan.FromSeconds(8),
+            errorCodesToAdd: null)));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options => {
@@ -209,42 +223,76 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
-
-    // EnsureCreated() only ever creates missing tables — it never alters one that
-    // already exists. Columns added to a model afterwards therefore have to be
-    // patched into existing databases by hand, or every query against them fails.
-    EnsureInquiryStatusColumns(db);
-
-    // Seed default admin only if credentials are explicitly provided.
-    var defaultEmail = builder.Configuration["Admin:DefaultEmail"];
-    var defaultPassword = builder.Configuration["Admin:DefaultPassword"];
     var log = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 
-    if (!db.Users.Any())
+    log.LogInformation("Using PostgreSQL at {Target}.", database.Target);
+
+    // Both branches exist so the TLS decision is never invisible: either the
+    // supplied string was weaker than it should be and was raised, or the opt-out
+    // is on and the connection really is unverified.
+    if (database.UpgradedTls)
     {
-        if (!string.IsNullOrWhiteSpace(defaultEmail) && !string.IsNullOrWhiteSpace(defaultPassword))
-        {
-            var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
-
-            var admin = new User { Email = defaultEmail.Trim().ToLowerInvariant(), IsAdmin = true };
-            admin.PasswordHash = hasher.HashPassword(admin, defaultPassword);
-
-            db.Users.Add(admin);
-            db.SaveChanges();
-
-            log.LogInformation("Seeded the first admin account ({Email}).", admin.Email);
-        }
-        else
-        {
-            // Without this warning a fresh deployment looks fine but has no way
-            // in — the login page simply rejects every attempt.
-            log.LogWarning(
-                "No users exist and Admin:DefaultEmail / Admin:DefaultPassword are not set, " +
-                "so no admin account was created and nobody can sign in. " +
-                "Set both values and restart.");
-        }
+        log.LogInformation(
+            "Raised the database connection to SSL Mode=VerifyFull. Set " +
+            "Database__AllowUnverifiedTls=true only if certificate validation " +
+            "cannot work in this environment.");
     }
+
+    if (!database.VerifiesServerIdentity)
+    {
+        log.LogWarning(
+            "The database connection does not verify the server's certificate, so " +
+            "the traffic is encrypted but the server's identity is unchecked.");
+    }
+
+    // A redeploy can easily land while the Neon compute is suspended, and every
+    // statement below is the app's first contact with it. Running them through
+    // the execution strategy means the wake-up delay is retried rather than
+    // crashing the container on boot — which, on a host that restarts failed
+    // deploys, otherwise turns into a loop.
+    var strategy = db.Database.CreateExecutionStrategy();
+    strategy.Execute(() =>
+    {
+        // A retry re-enters this delegate from the top, so anything the previous
+        // attempt left tracked has to go or the seed below would be queued twice.
+        db.ChangeTracker.Clear();
+
+        db.Database.EnsureCreated();
+
+        // EnsureCreated() only ever creates missing tables — it never alters one that
+        // already exists. Columns added to a model afterwards therefore have to be
+        // patched into existing databases by hand, or every query against them fails.
+        EnsureInquiryStatusColumns(db);
+
+        // Seed default admin only if credentials are explicitly provided.
+        var defaultEmail = builder.Configuration["Admin:DefaultEmail"];
+        var defaultPassword = builder.Configuration["Admin:DefaultPassword"];
+
+        if (!db.Users.Any())
+        {
+            if (!string.IsNullOrWhiteSpace(defaultEmail) && !string.IsNullOrWhiteSpace(defaultPassword))
+            {
+                var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
+
+                var admin = new User { Email = defaultEmail.Trim().ToLowerInvariant(), IsAdmin = true };
+                admin.PasswordHash = hasher.HashPassword(admin, defaultPassword);
+
+                db.Users.Add(admin);
+                db.SaveChanges();
+
+                log.LogInformation("Seeded the first admin account ({Email}).", admin.Email);
+            }
+            else
+            {
+                // Without this warning a fresh deployment looks fine but has no way
+                // in — the login page simply rejects every attempt.
+                log.LogWarning(
+                    "No users exist and Admin:DefaultEmail / Admin:DefaultPassword are not set, " +
+                    "so no admin account was created and nobody can sign in. " +
+                    "Set both values and restart.");
+            }
+        }
+    });
 }
 
 // First in the pipeline on purpose. Everything after it that looks at the

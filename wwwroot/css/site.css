@@ -818,9 +818,51 @@ form label.check{
   transition:border-color .22s var(--ease),background .22s var(--ease);
 }
 form label.check:hover{border-color:var(--gold);background:var(--gold-pale)}
+
+/* The whole row takes the accent once the box is ticked, so "this account is an
+   administrator" reads at a glance and not only from the 24px control. A browser
+   without :has() just keeps the plain row -- the box itself still turns gold, so
+   nothing is actually lost. */
+form label.check:has(input[type="checkbox"]:checked){
+  border-color:var(--gold);background:var(--gold-pale);font-weight:600;
+}
+
+/* The control is drawn from scratch. It has to be: the shared input rule above
+   sets appearance:none on every input, which strips a checkbox of its native
+   rendering entirely -- tick included -- and leaves accent-color with nothing to
+   colour. Ticking the box therefore used to change nothing you could see. */
 form label.check input[type="checkbox"]{
-  width:22px;height:22px;min-height:0;margin:0;flex-shrink:0;
-  accent-color:var(--gold-dark);cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  width:24px;height:24px;min-height:0;
+  margin:0;padding:0;flex-shrink:0;
+  display:grid;place-content:center;
+  background:var(--white);
+  border:1.5px solid var(--line);border-radius:7px;
+  cursor:pointer;
+  transition:background .2s var(--ease),border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
+form label.check input[type="checkbox"]:hover{border-color:var(--gold)}
+
+/* Two borders on a rotated box, rather than a glyph or an image: the tick stays
+   crisp at any zoom and costs no font or network request. */
+form label.check input[type="checkbox"]::before{
+  content:"";
+  width:6px;height:11px;margin-top:-2px;
+  border:solid var(--white);border-width:0 2.5px 2.5px 0;
+  transform:rotate(45deg) scale(0);
+  transition:transform .18s var(--ease);
+}
+form label.check input[type="checkbox"]:checked{
+  background:linear-gradient(135deg,var(--gold-light),var(--gold) 55%,var(--gold-dark));
+  border-color:var(--gold-dark);
+  box-shadow:0 2px 8px var(--gold-glow);
+}
+form label.check input[type="checkbox"]:checked::before{transform:rotate(45deg) scale(1)}
+
+/* Dropping the native appearance drops the native focus ring with it, which
+   would otherwise leave a keyboard user with no idea where they are. */
+form label.check input[type="checkbox"]:focus-visible{
+  border-color:var(--gold);box-shadow:var(--ring-gold);
 }
 
 form button[type="submit"]{width:100%;margin-top:6px}
